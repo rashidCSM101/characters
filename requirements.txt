@@ -1,0 +1,6 @@
+# Requirements for Urdu OCR Character Detection System
+# Based on paper: "Optical Character Recognition System for Urdu Words in Nastaliq Font"
+
+opencv-python>=4.5.0
+numpy>=1.19.0
+matplotlib>=3.3.0
