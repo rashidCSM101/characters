@@ -1,0 +1,34 @@
+{
+  "actual": {
+    "primary": 650,
+    "diacritics": 400,
+    "total": 1050
+  },
+  "detected": {
+    "primary": 474,
+    "diacritics": 357,
+    "total": 831
+  },
+  "confusion_matrix": {
+    "TP": 831,
+    "FP": 0,
+    "FN": 219,
+    "TN": 0
+  },
+  "primary": {
+    "TP": 474,
+    "FP": 0,
+    "FN": 176
+  },
+  "diacritics": {
+    "TP": 357,
+    "FP": 0,
+    "FN": 43
+  },
+  "metrics": {
+    "precision": 1.0,
+    "recall": 0.7914285714285715,
+    "f1_score": 0.8835725677830942,
+    "accuracy": 0.7914285714285715
+  }
+}
