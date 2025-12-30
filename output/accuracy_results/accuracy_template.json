@@ -1,0 +1,9 @@
+{
+  "page_003": {
+    "image_name": "page_003.png",
+    "detected_primary": 54,
+    "detected_secondary": 37,
+    "actual_primary": "MANUAL_COUNT_HERE",
+    "actual_diacritics": "MANUAL_COUNT_HERE"
+  }
+}
