@@ -1,7 +1,11 @@
 """
-Simple Accuracy Calculator
-===========================
-Sabse simple version - manually count karo aur compare karo
+Simple Accuracy Calculator (ENHANCED)
+======================================
+With Enhanced Preprocessing:
+1. Contrast Enhancement (CLAHE)
+2. Adaptive Thresholding
+3. Noise Removal (Morphological Operations)
+4. Skew Correction
 """
 
 import cv2
@@ -11,8 +15,84 @@ import sys
 import json
 
 
+def enhance_contrast(gray_image):
+    """CLAHE - Contrast Enhancement"""
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    return clahe.apply(gray_image)
+
+
+def detect_skew_angle(binary_image):
+    """Detect skew angle using Hough Transform"""
+    edges = cv2.Canny(binary_image, 50, 150, apertureSize=3)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, minLineLength=100, maxLineGap=10)
+    
+    if lines is None:
+        return 0.0
+    
+    angles = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        if x2 - x1 != 0:
+            angle = np.arctan((y2 - y1) / (x2 - x1)) * 180 / np.pi
+            if -45 < angle < 45:
+                angles.append(angle)
+    
+    return np.median(angles) if angles else 0.0
+
+
+def correct_skew(image, angle):
+    """Rotate image to correct skew"""
+    if abs(angle) < 0.5:
+        return image
+    
+    h, w = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    
+    cos, sin = np.abs(M[0, 0]), np.abs(M[0, 1])
+    new_w = int(h * sin + w * cos)
+    new_h = int(h * cos + w * sin)
+    M[0, 2] += (new_w - w) / 2
+    M[1, 2] += (new_h - h) / 2
+    
+    return cv2.warpAffine(image, M, (new_w, new_h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+
+def enhanced_preprocessing(image):
+    """Complete enhanced preprocessing pipeline"""
+    # 1. Grayscale
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image.copy()
+    
+    # 2. Contrast Enhancement (CLAHE)
+    enhanced = enhance_contrast(gray)
+    
+    # 3. Initial binarization for skew detection
+    _, initial_binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    
+    # 4. Skew Correction
+    skew_angle = detect_skew_angle(initial_binary)
+    if abs(skew_angle) > 0.5:
+        enhanced = correct_skew(enhanced, skew_angle)
+        print(f"  ↳ Skew corrected: {skew_angle:.2f}°")
+    
+    # 5. Adaptive Thresholding
+    binary = cv2.adaptiveThreshold(enhanced, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                   cv2.THRESH_BINARY_INV, blockSize=11, C=2)
+    
+    # 6. Noise Removal (Morphological Operations)
+    kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+    kernel_medium = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_small)
+    binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel_medium)
+    
+    return binary
+
+
 def detect_characters(image_path):
-    """Detect primary ligatures and diacritics"""
+    """Detect primary ligatures and diacritics with ENHANCED preprocessing"""
     print(f"\n🔍 Loading image: {image_path}")
     
     image = cv2.imread(image_path)
@@ -22,12 +102,13 @@ def detect_characters(image_path):
     
     print(f"✓ Image loaded: {image.shape}")
     
-    # Convert to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # Binarization (Otsu's)
-    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    print("✓ Binarization done")
+    # ENHANCED Preprocessing
+    print("📌 ENHANCED PREPROCESSING:")
+    print("  ↳ Contrast Enhancement (CLAHE)...")
+    print("  ↳ Adaptive Thresholding...")
+    print("  ↳ Noise Removal (Morphological Ops)...")
+    binary = enhanced_preprocessing(image)
+    print("✓ Enhanced binarization done")
     
     # Connected component labeling
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)

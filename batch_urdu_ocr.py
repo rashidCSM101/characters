@@ -1,15 +1,21 @@
 """
-Batch Urdu OCR System - Process Multiple Images
-================================================
+Batch Urdu OCR System - Process Multiple Images (ENHANCED)
+===========================================================
 Based on paper: "Optical Character Recognition System for Urdu Words in Nastaliq Font"
 By Safia Shabbir and Imran Siddiqi, Bahria University
 
-Ek folder se sari images uthata hai aur:
-1. Characters detect karta hai
-2. Primary ligatures aur diacritics alag karta hai
-3. Binary images alag folder mein save karta hai
-4. Visualization images alag folder mein save karta hai
-5. Har image ke characters separate folders mein save karta hai
+ENHANCED PREPROCESSING:
+1. Contrast Enhancement (CLAHE)
+2. Adaptive Thresholding
+3. Noise Removal (Morphological Operations)
+4. Skew Correction
+
+Features:
+- Characters detect karta hai
+- Primary ligatures aur diacritics alag karta hai
+- Binary images alag folder mein save karta hai
+- Visualization images alag folder mein save karta hai
+- Preprocessing steps bhi save karta hai
 """
 
 import cv2
@@ -20,7 +26,7 @@ from datetime import datetime
 
 class BatchUrduOCR:
     """
-    Batch processing for Urdu character detection
+    Enhanced Batch processing for Urdu character detection
     """
     
     def __init__(self, input_folder="input_images", output_folder="output"):
@@ -31,6 +37,7 @@ class BatchUrduOCR:
         self.binary_folder = os.path.join(output_folder, "binary_images")
         self.visualization_folder = os.path.join(output_folder, "visualization_images")
         self.characters_folder = os.path.join(output_folder, "extracted_characters")
+        self.preprocessing_folder = os.path.join(output_folder, "preprocessing_steps")
         
         # Create folders
         folders = [
@@ -38,7 +45,8 @@ class BatchUrduOCR:
             self.output_folder,
             self.binary_folder,
             self.visualization_folder,
-            self.characters_folder
+            self.characters_folder,
+            self.preprocessing_folder
         ]
         
         for folder in folders:
@@ -49,15 +57,183 @@ class BatchUrduOCR:
         self.min_component_area = 10
         self.supported_formats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif']
     
-    def preprocess_binarization(self, image):
-        """Step 1: Binarization - Otsu's thresholding"""
+    # =========================================================================
+    # ENHANCEMENT 1: CONTRAST IMPROVEMENT (CLAHE)
+    # =========================================================================
+    def enhance_contrast(self, gray_image):
+        """
+        Contrast Limited Adaptive Histogram Equalization (CLAHE)
+        Improves contrast in different regions of the image
+        """
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        enhanced = clahe.apply(gray_image)
+        return enhanced
+    
+    # =========================================================================
+    # ENHANCEMENT 2: SKEW CORRECTION
+    # =========================================================================
+    def detect_skew_angle(self, binary_image):
+        """
+        Detect skew angle using Hough Line Transform
+        Returns angle in degrees
+        """
+        # Find edges
+        edges = cv2.Canny(binary_image, 50, 150, apertureSize=3)
+        
+        # Detect lines using Hough Transform
+        lines = cv2.HoughLinesP(
+            edges, 1, np.pi/180, 
+            threshold=100, 
+            minLineLength=100, 
+            maxLineGap=10
+        )
+        
+        if lines is None:
+            return 0.0
+        
+        # Calculate angles
+        angles = []
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            if x2 - x1 != 0:  # Avoid division by zero
+                angle = np.arctan((y2 - y1) / (x2 - x1)) * 180 / np.pi
+                # Only consider small angles (likely text baseline)
+                if -45 < angle < 45:
+                    angles.append(angle)
+        
+        if not angles:
+            return 0.0
+        
+        # Return median angle
+        return np.median(angles)
+    
+    def correct_skew(self, image, angle):
+        """
+        Rotate image to correct skew
+        """
+        if abs(angle) < 0.5:  # Skip if angle is very small
+            return image
+        
+        h, w = image.shape[:2]
+        center = (w // 2, h // 2)
+        
+        # Get rotation matrix
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        
+        # Calculate new image size to avoid cropping
+        cos = np.abs(M[0, 0])
+        sin = np.abs(M[0, 1])
+        new_w = int(h * sin + w * cos)
+        new_h = int(h * cos + w * sin)
+        
+        # Adjust rotation matrix
+        M[0, 2] += (new_w - w) / 2
+        M[1, 2] += (new_h - h) / 2
+        
+        # Rotate
+        rotated = cv2.warpAffine(
+            image, M, (new_w, new_h),
+            flags=cv2.INTER_CUBIC,
+            borderMode=cv2.BORDER_REPLICATE
+        )
+        
+        return rotated
+    
+    # =========================================================================
+    # ENHANCEMENT 3: ADAPTIVE THRESHOLDING
+    # =========================================================================
+    def adaptive_binarization(self, gray_image):
+        """
+        Adaptive thresholding for better results with varying lighting
+        """
+        # Apply Gaussian Adaptive Thresholding
+        binary = cv2.adaptiveThreshold(
+            gray_image,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV,
+            blockSize=11,  # Size of neighborhood
+            C=2            # Constant subtracted from mean
+        )
+        return binary
+    
+    # =========================================================================
+    # ENHANCEMENT 4: NOISE REMOVAL (MORPHOLOGICAL OPERATIONS)
+    # =========================================================================
+    def remove_noise_morphology(self, binary_image):
+        """
+        Remove noise using morphological operations:
+        - Opening: Removes small white noise (foreground)
+        - Closing: Fills small holes in characters
+        """
+        # Define kernels
+        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
+        kernel_medium = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        
+        # Step 1: Opening - remove small noise particles
+        opened = cv2.morphologyEx(binary_image, cv2.MORPH_OPEN, kernel_small)
+        
+        # Step 2: Closing - fill small holes in characters
+        closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_medium)
+        
+        return closed
+    
+    # =========================================================================
+    # COMPLETE ENHANCED PREPROCESSING PIPELINE
+    # =========================================================================
+    def preprocess_binarization(self, image, save_steps=False, base_name=""):
+        """
+        Enhanced preprocessing pipeline:
+        1. Convert to grayscale
+        2. Contrast enhancement (CLAHE)
+        3. Skew detection and correction
+        4. Adaptive thresholding
+        5. Noise removal (morphological operations)
+        """
+        steps = {}
+        
+        # Step 1: Convert to grayscale
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             gray = image.copy()
+        steps['1_grayscale'] = gray
         
-        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        return binary
+        # Step 2: Contrast Enhancement (CLAHE)
+        enhanced = self.enhance_contrast(gray)
+        steps['2_contrast_enhanced'] = enhanced
+        
+        # Step 3: Initial binarization for skew detection
+        _, initial_binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        
+        # Step 4: Skew Detection and Correction
+        skew_angle = self.detect_skew_angle(initial_binary)
+        if abs(skew_angle) > 0.5:
+            enhanced = self.correct_skew(enhanced, skew_angle)
+            steps['3_skew_corrected'] = enhanced
+            print(f"    ↳ Skew corrected: {skew_angle:.2f}°")
+        else:
+            steps['3_skew_corrected'] = enhanced
+        
+        # Step 5: Adaptive Thresholding
+        binary_adaptive = self.adaptive_binarization(enhanced)
+        steps['4_adaptive_threshold'] = binary_adaptive
+        
+        # Step 6: Noise Removal (Morphological Operations)
+        binary_clean = self.remove_noise_morphology(binary_adaptive)
+        steps['5_noise_removed'] = binary_clean
+        
+        # Save preprocessing steps if requested
+        if save_steps and base_name:
+            self.save_preprocessing_steps(steps, base_name)
+        
+        return binary_clean
+    
+    def save_preprocessing_steps(self, steps, base_name):
+        """Save all preprocessing steps as images"""
+        for step_name, step_image in steps.items():
+            filepath = os.path.join(self.preprocessing_folder, f"{base_name}_{step_name}.png")
+            cv2.imwrite(filepath, step_image)
     
     def extract_components(self, binary_image):
         """Step 2: Connected Component Labeling"""
@@ -150,7 +326,7 @@ class BatchUrduOCR:
         return vis_image
     
     def process_single_image(self, image_path, image_name):
-        """Process one image"""
+        """Process one image with ENHANCED preprocessing"""
         print(f"\n{'='*60}")
         print(f"Processing: {image_name}")
         print('='*60)
@@ -165,11 +341,16 @@ class BatchUrduOCR:
         
         base_name = os.path.splitext(image_name)[0]
         
-        # Step 1: Binarization
-        binary_image = self.preprocess_binarization(original_image)
+        # Step 1: ENHANCED Binarization (with all preprocessing steps)
+        print("  📌 ENHANCED PREPROCESSING:")
+        print("    ↳ Contrast Enhancement (CLAHE)...")
+        print("    ↳ Adaptive Thresholding...")
+        print("    ↳ Noise Removal (Morphological Ops)...")
+        binary_image = self.preprocess_binarization(original_image, save_steps=True, base_name=base_name)
         binary_path = os.path.join(self.binary_folder, f"{base_name}_binary.png")
         cv2.imwrite(binary_path, binary_image)
         print(f"  ✓ Binary saved: {base_name}_binary.png")
+        print(f"  ✓ Preprocessing steps saved to: preprocessing_steps/")
         
         # Step 2: Extract components
         components = self.extract_components(binary_image)
