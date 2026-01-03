@@ -21,6 +21,12 @@ def enhance_contrast(gray_image):
     return clahe.apply(gray_image)
 
 
+def bilateral_denoise(gray_image):
+    """Bilateral filter for edge-preserving denoising"""
+    denoised = cv2.bilateralFilter(gray_image, 9, 75, 75)
+    return denoised
+
+
 def detect_skew_angle(binary_image):
     """Detect skew angle using Hough Transform"""
     edges = cv2.Canny(binary_image, 50, 150, apertureSize=3)
@@ -59,15 +65,18 @@ def correct_skew(image, angle):
 
 
 def enhanced_preprocessing(image):
-    """Complete enhanced preprocessing pipeline"""
+    """Complete enhanced preprocessing pipeline - IMPROVED"""
     # 1. Grayscale
     if len(image.shape) == 3:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
         gray = image.copy()
     
+    # 1.5. IMPROVED - Bilateral filter denoising
+    denoised = bilateral_denoise(gray)
+    
     # 2. Contrast Enhancement (CLAHE)
-    enhanced = enhance_contrast(gray)
+    enhanced = enhance_contrast(denoised)
     
     # 3. Initial binarization for skew detection
     _, initial_binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
@@ -78,15 +87,15 @@ def enhanced_preprocessing(image):
         enhanced = correct_skew(enhanced, skew_angle)
         print(f"  ↳ Skew corrected: {skew_angle:.2f}°")
     
-    # 5. Adaptive Thresholding
+    # 5. IMPROVED - Optimized Adaptive Thresholding
     binary = cv2.adaptiveThreshold(enhanced, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                   cv2.THRESH_BINARY_INV, blockSize=11, C=2)
+                                   cv2.THRESH_BINARY_INV, blockSize=13, C=3)
     
-    # 6. Noise Removal (Morphological Operations)
+    # 6. IMPROVED - Gentler Noise Removal (Morphological Operations)
+    kernel_tiny = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
     kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-    kernel_medium = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_small)
-    binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel_medium)
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_tiny)
+    binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel_small)
     
     return binary
 
@@ -115,7 +124,7 @@ def detect_characters(image_path):
     print(f"✓ Found {num_labels - 1} components")
     
     components = []
-    min_area = 10
+    min_area = 3  # IMPROVED: Reduced from 10 to 3
     
     for i in range(1, num_labels):
         x = stats[i, cv2.CC_STAT_LEFT]
@@ -134,14 +143,29 @@ def detect_characters(image_path):
         print("❌ No components found!")
         return 0, 0
     
-    # Find baseline
+    # IMPROVED: Robust baseline detection
+    # Method 1: Traditional horizontal projection
     h_proj = np.sum(binary, axis=1)
-    baseline = np.argmax(h_proj)
+    baseline_proj = np.argmax(h_proj)
+    
+    # Method 2: Contour-based (more robust)
+    contours, _ = cv2.findContours(binary.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if len(contours) > 0:
+        bottom_points = []
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            bottom_points.append(y + h)
+        baseline_contour = int(np.median(bottom_points))
+        baseline = int((baseline_proj + baseline_contour) / 2)
+    else:
+        baseline = baseline_proj
+    
     print(f"✓ Baseline at row: {baseline}")
     
-    # Separate primary and diacritics
+    # IMPROVED: Smarter primary/diacritic separation with multiple criteria
     avg_height = np.mean([c['h'] for c in components])
     avg_area = np.mean([c['area'] for c in components])
+    avg_width = np.mean([c['w'] for c in components])
     
     primary_count = 0
     diacritics_count = 0
@@ -149,10 +173,33 @@ def detect_characters(image_path):
     for comp in components:
         y_top = comp['y']
         y_bottom = comp['y'] + comp['h']
-        touches_baseline = y_top <= baseline <= y_bottom
-        is_small = comp['area'] < avg_area * 0.3 or comp['h'] < avg_height * 0.5
         
-        if touches_baseline or (not is_small and comp['h'] > avg_height * 0.4):
+        # Criterion 1: Baseline touching
+        touches_baseline = y_top <= baseline <= y_bottom
+        
+        # Criterion 2: Size relative to average
+        relative_area = comp['area'] / avg_area
+        relative_height = comp['h'] / avg_height
+        
+        # Criterion 3: Aspect ratio (diacritics tend to be circular)
+        aspect_ratio = comp['w'] / comp['h'] if comp['h'] > 0 else 1
+        is_round = 0.6 < aspect_ratio < 1.4
+        
+        # Criterion 4: Distance from baseline
+        distance_from_baseline = min(abs(y_top - baseline), abs(y_bottom - baseline))
+        is_far_from_baseline = distance_from_baseline > avg_height * 0.3
+        
+        # Classification: Diacritics are small, round, and far from baseline
+        is_diacritic = (
+            relative_area < 0.25 and 
+            is_far_from_baseline and 
+            is_round
+        ) or (
+            relative_height < 0.4 and 
+            relative_area < 0.2
+        )
+        
+        if not is_diacritic and (touches_baseline or relative_height > 0.45):
             primary_count += 1
         else:
             diacritics_count += 1

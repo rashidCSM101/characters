@@ -164,45 +164,18 @@ class BatchUrduOCR:
     def adaptive_binarization(self, gray_image):
         """
         Adaptive thresholding for better results with varying lighting
-        IMPROVED: Try multiple parameters and combine results
+        IMPROVED: Optimized parameters for Urdu text
         """
-        # Apply Gaussian Adaptive Thresholding
+        # Apply Gaussian Adaptive Thresholding with optimized parameters
         binary = cv2.adaptiveThreshold(
             gray_image,
             255,
             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,
-            blockSize=11,  # Size of neighborhood
-            C=2            # Constant subtracted from mean
+            blockSize=13,  # Optimized for Urdu text
+            C=3            # Optimized constant
         )
         return binary
-    
-    def multi_parameter_binarization(self, gray_image):
-        """
-        IMPROVED: Try multiple adaptive thresholding parameters and combine
-        This catches characters that might be missed with single parameters
-        """
-        all_binaries = []
-        
-        # Try different combinations of block size and C value
-        for block_size in self.adaptive_block_sizes:
-            for C in self.adaptive_C_values:
-                binary = cv2.adaptiveThreshold(
-                    gray_image,
-                    255,
-                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                    cv2.THRESH_BINARY_INV,
-                    blockSize=block_size,
-                    C=C
-                )
-                all_binaries.append(binary)
-        
-        # Combine all results using OR operation (union)
-        combined = np.zeros_like(all_binaries[0])
-        for binary in all_binaries:
-            combined = cv2.bitwise_or(combined, binary)
-        
-        return combined
     
     # =========================================================================
     # ENHANCEMENT 4: NOISE REMOVAL (MORPHOLOGICAL OPERATIONS)
@@ -307,10 +280,10 @@ class BatchUrduOCR:
         
         # Find peaks (character centers)
         ret, sure_fg = cv2.threshold(dist, 0.3 * dist.max(), 255, 0)
-        sure_fg = np.uint8(sure_fg)
+        sure_fg = sure_fg.astype(np.uint8)
         
         # Find markers
-        ret, markers = cv2.connectedComponents(sure_fg)
+        ret, markers = cv2.connectedComponents(sure_fg.astype(np.uint8))
         
         # If only one marker, no need to split
         if ret <= 2:
