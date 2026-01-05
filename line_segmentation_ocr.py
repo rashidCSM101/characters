@@ -30,6 +30,13 @@ class LineSegmentationOCR:
         self.adaptive_block_size = 13
         self.adaptive_C = 3
     
+    def sharpen_image(self, gray_image):
+        """Sharpen image for clearer edges"""
+        kernel = np.array([[-1,-1,-1],
+                          [-1, 9,-1],
+                          [-1,-1,-1]])
+        return cv2.filter2D(gray_image, -1, kernel)
+    
     def enhance_contrast(self, gray_image):
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         return clahe.apply(gray_image)
@@ -74,33 +81,20 @@ class LineSegmentationOCR:
                              borderMode=cv2.BORDER_REPLICATE)
     
     def preprocess_image(self, image):
-        """Enhanced preprocessing"""
+        """SIMPLIFIED preprocessing - same as batch_urdu_ocr.py"""
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             gray = image.copy()
         
-        denoised = self.bilateral_denoise(gray)
-        enhanced = self.enhance_contrast(denoised)
+        # Sharpen for clear edges
+        sharpened = self.sharpen_image(gray)
         
-        _, initial_binary = cv2.threshold(enhanced, 0, 255, 
-                                         cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        # Otsu's thresholding - cleanest results
+        _, binary = cv2.threshold(sharpened, 0, 255, 
+                                 cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         
-        skew_angle = self.detect_skew_angle(initial_binary)
-        if abs(skew_angle) > 0.5:
-            enhanced = self.correct_skew(enhanced, skew_angle)
-            print(f"  ↳ Skew corrected: {skew_angle:.2f}°")
-        
-        binary = cv2.adaptiveThreshold(enhanced, 255, 
-                                       cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                       cv2.THRESH_BINARY_INV, 
-                                       self.adaptive_block_size, self.adaptive_C)
-        
-        kernel_tiny = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
-        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel_tiny)
-        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel_small)
-        
+        # NO morphological operations - preserve all details
         return binary
     
     def segment_lines(self, binary_image, original_image):

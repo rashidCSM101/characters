@@ -1,0 +1,101 @@
+{
+  "image_base_name": "test",
+  "total_lines": 13,
+  "total_ligatures": 398,
+  "total_orphans": 15,
+  "total_components": 719,
+  "lines": [
+    {
+      "line": "1",
+      "file": "test_line_1.png",
+      "ligatures": 33,
+      "orphans": 1,
+      "components": 60
+    },
+    {
+      "line": "10",
+      "file": "test_line_10.png",
+      "ligatures": 39,
+      "orphans": 0,
+      "components": 71
+    },
+    {
+      "line": "11",
+      "file": "test_line_11.png",
+      "ligatures": 29,
+      "orphans": 0,
+      "components": 51
+    },
+    {
+      "line": "12",
+      "file": "test_line_12.png",
+      "ligatures": 35,
+      "orphans": 2,
+      "components": 59
+    },
+    {
+      "line": "13",
+      "file": "test_line_13.png",
+      "ligatures": 8,
+      "orphans": 0,
+      "components": 10
+    },
+    {
+      "line": "2",
+      "file": "test_line_2.png",
+      "ligatures": 29,
+      "orphans": 0,
+      "components": 51
+    },
+    {
+      "line": "3",
+      "file": "test_line_3.png",
+      "ligatures": 28,
+      "orphans": 2,
+      "components": 58
+    },
+    {
+      "line": "4",
+      "file": "test_line_4.png",
+      "ligatures": 35,
+      "orphans": 0,
+      "components": 58
+    },
+    {
+      "line": "5",
+      "file": "test_line_5.png",
+      "ligatures": 20,
+      "orphans": 10,
+      "components": 59
+    },
+    {
+      "line": "6",
+      "file": "test_line_6.png",
+      "ligatures": 39,
+      "orphans": 0,
+      "components": 61
+    },
+    {
+      "line": "7",
+      "file": "test_line_7.png",
+      "ligatures": 41,
+      "orphans": 0,
+      "components": 59
+    },
+    {
+      "line": "8",
+      "file": "test_line_8.png",
+      "ligatures": 35,
+      "orphans": 0,
+      "components": 58
+    },
+    {
+      "line": "9",
+      "file": "test_line_9.png",
+      "ligatures": 27,
+      "orphans": 0,
+      "components": 64
+    }
+  ],
+  "processed_at": "2026-01-05 14:01:02"
+}

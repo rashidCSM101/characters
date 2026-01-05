@@ -62,18 +62,30 @@ class BatchUrduOCR:
         self.scales = [0.95, 1.0, 1.05]  # Narrower range to reduce duplicates
         
         # IMPROVED: Adaptive thresholding parameters (optimized single parameter)
-        self.adaptive_block_size = 13  # Optimal for Urdu text
-        self.adaptive_C = 3  # Optimal constant
+        self.adaptive_block_size = 17  # Increased for better local adaptation
+        self.adaptive_C = 1  # Further reduced to prevent dots from merging
     
     # =========================================================================
     # ENHANCEMENT 1: CONTRAST IMPROVEMENT (CLAHE)
     # =========================================================================
+    def sharpen_image(self, gray_image):
+        """
+        Sharpen image for clearer edges and better ligature detection
+        """
+        # Create sharpening kernel
+        kernel = np.array([[-1,-1,-1],
+                          [-1, 9,-1],
+                          [-1,-1,-1]])
+        sharpened = cv2.filter2D(gray_image, -1, kernel)
+        return sharpened
+    
     def enhance_contrast(self, gray_image):
         """
         Contrast Limited Adaptive Histogram Equalization (CLAHE)
         Improves contrast in different regions of the image
+        REDUCED clipLimit to preserve dots
         """
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))  # Reduced from 2.0
         enhanced = clahe.apply(gray_image)
         return enhanced
     
@@ -84,8 +96,9 @@ class BatchUrduOCR:
         """
         Bilateral filter for edge-preserving denoising
         Better than Gaussian blur for text
+        REDUCED strength to preserve dots (nuqte)
         """
-        denoised = cv2.bilateralFilter(gray_image, 9, 75, 75)
+        denoised = cv2.bilateralFilter(gray_image, 5, 50, 50)  # Reduced from 9,75,75
         return denoised
     
     # =========================================================================
@@ -182,34 +195,23 @@ class BatchUrduOCR:
     # =========================================================================
     def remove_noise_morphology(self, binary_image):
         """
-        Remove noise using morphological operations:
-        - Opening: Removes small white noise (foreground)
-        - Closing: Fills small holes in characters
-        - IMPROVED: Gentle closing to avoid merging separate characters
+        MINIMAL noise removal to preserve dots (nuqte)
+        NO morphological operations - direct return to keep dots separate
         """
-        # Define kernels - REDUCED size to avoid merging characters
-        kernel_tiny = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
-        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        
-        # Step 1: Opening - remove small noise particles
-        opened = cv2.morphologyEx(binary_image, cv2.MORPH_OPEN, kernel_tiny)
-        
-        # Step 2: Gentle Closing - fill only very small holes, avoid merging
-        closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_small)
-        
-        return closed
+        # Return as-is to preserve all dots and fine details
+        return binary_image
     
     # =========================================================================
     # COMPLETE ENHANCED PREPROCESSING PIPELINE
     # =========================================================================
     def preprocess_binarization(self, image, save_steps=False, base_name=""):
         """
-        Enhanced preprocessing pipeline:
-        1. Convert to grayscale
-        2. Contrast enhancement (CLAHE)
-        3. Skew detection and correction
-        4. Adaptive thresholding
-        5. Noise removal (morphological operations)
+        SIMPLIFIED preprocessing for CLEARER images:
+        1. Grayscale
+        2. Light denoising (optional)
+        3. Sharpen for clear edges
+        4. Otsu's thresholding (gives CLEANEST results)
+        5. NO morphological operations (preserve dots)
         """
         steps = {}
         
@@ -220,37 +222,27 @@ class BatchUrduOCR:
             gray = image.copy()
         steps['1_grayscale'] = gray
         
-        # Step 1.5: IMPROVED - Bilateral filter denoising
-        denoised = self.bilateral_denoise(gray)
-        steps['1.5_denoised'] = denoised
+        # Step 2: OPTIONAL - Very light denoising (comment out if not needed)
+        # denoised = cv2.GaussianBlur(gray, (3, 3), 0)
+        # steps['2_denoised'] = denoised
+        # gray = denoised
         
-        # Step 2: Contrast Enhancement (CLAHE)
-        enhanced = self.enhance_contrast(denoised)
-        steps['2_contrast_enhanced'] = enhanced
+        # Step 3: Sharpen for clearer edges
+        sharpened = self.sharpen_image(gray)
+        steps['2_sharpened'] = sharpened
         
-        # Step 3: Initial binarization for skew detection
-        _, initial_binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        
-        # Step 4: Skew Detection and Correction
-        skew_angle = self.detect_skew_angle(initial_binary)
-        if abs(skew_angle) > 0.5:
-            enhanced = self.correct_skew(enhanced, skew_angle)
-            steps['3_skew_corrected'] = enhanced
-            print(f"    ↳ Skew corrected: {skew_angle:.2f}°")
-        else:
-            steps['3_skew_corrected'] = enhanced
-        
-        # Step 5: IMPROVED - Optimized Adaptive Thresholding
-        # Using single optimized parameters instead of multi-parameter (reduces false positives)
-        binary_adaptive = cv2.adaptiveThreshold(
-            enhanced, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV, blockSize=13, C=3
+        # Step 4: Otsu's Thresholding (gives CLEANEST binary images)
+        # This automatically finds the best threshold value
+        _, binary_otsu = cv2.threshold(
+            sharpened, 0, 255, 
+            cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
         )
-        steps['4_adaptive_threshold'] = binary_adaptive
+        steps['3_otsu_threshold'] = binary_otsu
         
-        # Step 6: Noise Removal (Morphological Operations)
-        binary_clean = self.remove_noise_morphology(binary_adaptive)
-        steps['5_noise_removed'] = binary_clean
+        # Step 5: NO morphological operations - keep image CLEAN
+        # Direct use of binary image preserves all details
+        binary_clean = binary_otsu
+        steps['4_final'] = binary_clean
         
         # Save preprocessing steps if requested
         if save_steps and base_name:

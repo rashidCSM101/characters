@@ -1,0 +1,90 @@
+{
+  "image": "test.png",
+  "total_lines": 13,
+  "processed_lines": 13,
+  "results": [
+    {
+      "line_number": 1,
+      "ligatures": 33,
+      "orphans": 1,
+      "total": 60
+    },
+    {
+      "line_number": 2,
+      "ligatures": 29,
+      "orphans": 0,
+      "total": 51
+    },
+    {
+      "line_number": 3,
+      "ligatures": 28,
+      "orphans": 2,
+      "total": 58
+    },
+    {
+      "line_number": 4,
+      "ligatures": 35,
+      "orphans": 0,
+      "total": 58
+    },
+    {
+      "line_number": 5,
+      "ligatures": 20,
+      "orphans": 10,
+      "total": 59
+    },
+    {
+      "line_number": 6,
+      "ligatures": 39,
+      "orphans": 0,
+      "total": 61
+    },
+    {
+      "line_number": 7,
+      "ligatures": 41,
+      "orphans": 0,
+      "total": 59
+    },
+    {
+      "line_number": 8,
+      "ligatures": 35,
+      "orphans": 0,
+      "total": 58
+    },
+    {
+      "line_number": 9,
+      "ligatures": 27,
+      "orphans": 0,
+      "total": 64
+    },
+    {
+      "line_number": 10,
+      "ligatures": 39,
+      "orphans": 0,
+      "total": 71
+    },
+    {
+      "line_number": 11,
+      "ligatures": 29,
+      "orphans": 0,
+      "total": 51
+    },
+    {
+      "line_number": 12,
+      "ligatures": 35,
+      "orphans": 2,
+      "total": 59
+    },
+    {
+      "line_number": 13,
+      "ligatures": 8,
+      "orphans": 0,
+      "total": 10
+    }
+  ],
+  "totals": {
+    "ligatures": 398,
+    "orphans": 15,
+    "components": 719
+  }
+}
