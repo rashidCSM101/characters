@@ -1,0 +1,21 @@
+{
+  "image": "img3.png",
+  "timestamp": "2026-01-22T02:16:46.040633",
+  "total_lines": 1,
+  "summary": {
+    "total_ligatures": 8,
+    "ligatures_with_diacritics": 4,
+    "orphan_diacritics": 0,
+    "total_components": 13
+  },
+  "per_line_results": [
+    {
+      "line": 1,
+      "ligatures": 8,
+      "ligatures_with_diacritics": 4,
+      "total_diacritics_grouped": 5,
+      "orphan_diacritics": 0,
+      "total_components": 13
+    }
+  ]
+}
