@@ -1,0 +1,134 @@
+{
+  "total_unique_ligatures": 8,
+  "total_duplicates": 0,
+  "ligatures": [
+    {
+      "id": 1,
+      "filename": "ligature_0001_dots_2.png",
+      "diacritic_count": 2,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 52,
+        "height": 61
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "filename": "ligature_0002_dots_1.png",
+      "diacritic_count": 1,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 50,
+        "height": 32
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "filename": "ligature_0003_dots_1.png",
+      "diacritic_count": 1,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 91,
+        "height": 40
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 2
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "filename": "ligature_0004_dots_1.png",
+      "diacritic_count": 1,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 61,
+        "height": 50
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 3
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "filename": "ligature_0005_dots_0.png",
+      "diacritic_count": 0,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 76,
+        "height": 33
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 4
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "filename": "ligature_0006_dots_0.png",
+      "diacritic_count": 0,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 25,
+        "height": 29
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 5
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "filename": "ligature_0007_dots_0.png",
+      "diacritic_count": 0,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 25,
+        "height": 29
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 6
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "filename": "ligature_0008_dots_0.png",
+      "diacritic_count": 0,
+      "occurrences": 1,
+      "dimensions": {
+        "width": 18,
+        "height": 9
+      },
+      "sources": [
+        {
+          "line": "results_img3_L1",
+          "char_idx": 7
+        }
+      ]
+    }
+  ]
+}

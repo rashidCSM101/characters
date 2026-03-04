@@ -1,0 +1,125 @@
+{
+  "image": "img3.png",
+  "timestamp": "2026-01-23T17:06:09.549534",
+  "total_lines": 14,
+  "summary": {
+    "total_ligatures": 273,
+    "ligatures_with_diacritics": 132,
+    "orphan_diacritics": 51,
+    "total_components": 717
+  },
+  "per_line_results": [
+    {
+      "line": 1,
+      "ligatures": 18,
+      "ligatures_with_diacritics": 10,
+      "total_diacritics_grouped": 18,
+      "orphan_diacritics": 6,
+      "total_components": 42
+    },
+    {
+      "line": 2,
+      "ligatures": 24,
+      "ligatures_with_diacritics": 9,
+      "total_diacritics_grouped": 12,
+      "orphan_diacritics": 0,
+      "total_components": 36
+    },
+    {
+      "line": 3,
+      "ligatures": 21,
+      "ligatures_with_diacritics": 11,
+      "total_diacritics_grouped": 26,
+      "orphan_diacritics": 1,
+      "total_components": 48
+    },
+    {
+      "line": 4,
+      "ligatures": 20,
+      "ligatures_with_diacritics": 8,
+      "total_diacritics_grouped": 20,
+      "orphan_diacritics": 1,
+      "total_components": 41
+    },
+    {
+      "line": 5,
+      "ligatures": 25,
+      "ligatures_with_diacritics": 9,
+      "total_diacritics_grouped": 24,
+      "orphan_diacritics": 1,
+      "total_components": 50
+    },
+    {
+      "line": 6,
+      "ligatures": 9,
+      "ligatures_with_diacritics": 2,
+      "total_diacritics_grouped": 2,
+      "orphan_diacritics": 0,
+      "total_components": 11
+    },
+    {
+      "line": 7,
+      "ligatures": 29,
+      "ligatures_with_diacritics": 13,
+      "total_diacritics_grouped": 60,
+      "orphan_diacritics": 10,
+      "total_components": 99
+    },
+    {
+      "line": 8,
+      "ligatures": 17,
+      "ligatures_with_diacritics": 12,
+      "total_diacritics_grouped": 33,
+      "orphan_diacritics": 0,
+      "total_components": 50
+    },
+    {
+      "line": 9,
+      "ligatures": 19,
+      "ligatures_with_diacritics": 15,
+      "total_diacritics_grouped": 111,
+      "orphan_diacritics": 25,
+      "total_components": 155
+    },
+    {
+      "line": 10,
+      "ligatures": 18,
+      "ligatures_with_diacritics": 10,
+      "total_diacritics_grouped": 20,
+      "orphan_diacritics": 2,
+      "total_components": 40
+    },
+    {
+      "line": 11,
+      "ligatures": 22,
+      "ligatures_with_diacritics": 10,
+      "total_diacritics_grouped": 21,
+      "orphan_diacritics": 2,
+      "total_components": 45
+    },
+    {
+      "line": 12,
+      "ligatures": 11,
+      "ligatures_with_diacritics": 6,
+      "total_diacritics_grouped": 12,
+      "orphan_diacritics": 3,
+      "total_components": 26
+    },
+    {
+      "line": 13,
+      "ligatures": 19,
+      "ligatures_with_diacritics": 6,
+      "total_diacritics_grouped": 13,
+      "orphan_diacritics": 0,
+      "total_components": 32
+    },
+    {
+      "line": 14,
+      "ligatures": 21,
+      "ligatures_with_diacritics": 11,
+      "total_diacritics_grouped": 21,
+      "orphan_diacritics": 0,
+      "total_components": 42
+    }
+  ]
+}

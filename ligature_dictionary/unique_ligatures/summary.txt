@@ -1,0 +1,66 @@
+======================================================================
+LIGATURE DICTIONARY SUMMARY
+======================================================================
+
+Total Unique Ligatures: 8
+Total Duplicates: 0
+Total Occurrences: 8
+
+Ligature Details:
+----------------------------------------------------------------------
+
+ID: 0001
+  File: ligature_0001_dots_2.png
+  Diacritics: 2
+  Occurrences: 1
+  Size: 52x61
+  Found in lines: results_img3_L1
+
+ID: 0002
+  File: ligature_0002_dots_1.png
+  Diacritics: 1
+  Occurrences: 1
+  Size: 50x32
+  Found in lines: results_img3_L1
+
+ID: 0003
+  File: ligature_0003_dots_1.png
+  Diacritics: 1
+  Occurrences: 1
+  Size: 91x40
+  Found in lines: results_img3_L1
+
+ID: 0004
+  File: ligature_0004_dots_1.png
+  Diacritics: 1
+  Occurrences: 1
+  Size: 61x50
+  Found in lines: results_img3_L1
+
+ID: 0005
+  File: ligature_0005_dots_0.png
+  Diacritics: 0
+  Occurrences: 1
+  Size: 76x33
+  Found in lines: results_img3_L1
+
+ID: 0006
+  File: ligature_0006_dots_0.png
+  Diacritics: 0
+  Occurrences: 1
+  Size: 25x29
+  Found in lines: results_img3_L1
+
+ID: 0007
+  File: ligature_0007_dots_0.png
+  Diacritics: 0
+  Occurrences: 1
+  Size: 25x29
+  Found in lines: results_img3_L1
+
+ID: 0008
+  File: ligature_0008_dots_0.png
+  Diacritics: 0
+  Occurrences: 1
+  Size: 18x9
+  Found in lines: results_img3_L1

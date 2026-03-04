@@ -54,20 +54,52 @@ class BatchUrduOCR:
                 os.makedirs(folder)
                 print(f"✓ Created: {folder}")
         
-        self.min_component_area = 10
+        self.min_component_area = 3  # IMPROVED: Reduced from 10 to 3 to detect smaller characters
         self.supported_formats = ['.png', '.jpg', '.jpeg', '.bmp', '.tiff', '.tif']
+        
+        # IMPROVED: Multi-scale detection (disabled by default to avoid over-detection)
+        self.use_multiscale = False  # Set to True if needed
+        self.scales = [0.95, 1.0, 1.05]  # Narrower range to reduce duplicates
+        
+        # IMPROVED: Adaptive thresholding parameters (optimized single parameter)
+        self.adaptive_block_size = 17  # Increased for better local adaptation
+        self.adaptive_C = 1  # Further reduced to prevent dots from merging
     
     # =========================================================================
     # ENHANCEMENT 1: CONTRAST IMPROVEMENT (CLAHE)
     # =========================================================================
+    def sharpen_image(self, gray_image):
+        """
+        Sharpen image for clearer edges and better ligature detection
+        """
+        # Create sharpening kernel
+        kernel = np.array([[-1,-1,-1],
+                          [-1, 9,-1],
+                          [-1,-1,-1]])
+        sharpened = cv2.filter2D(gray_image, -1, kernel)
+        return sharpened
+    
     def enhance_contrast(self, gray_image):
         """
         Contrast Limited Adaptive Histogram Equalization (CLAHE)
         Improves contrast in different regions of the image
+        REDUCED clipLimit to preserve dots
         """
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))  # Reduced from 2.0
         enhanced = clahe.apply(gray_image)
         return enhanced
+    
+    # =========================================================================
+    # ENHANCEMENT: BILATERAL FILTER DENOISING
+    # =========================================================================
+    def bilateral_denoise(self, gray_image):
+        """
+        Bilateral filter for edge-preserving denoising
+        Better than Gaussian blur for text
+        REDUCED strength to preserve dots (nuqte)
+        """
+        denoised = cv2.bilateralFilter(gray_image, 5, 50, 50)  # Reduced from 9,75,75
+        return denoised
     
     # =========================================================================
     # ENHANCEMENT 2: SKEW CORRECTION
@@ -140,20 +172,21 @@ class BatchUrduOCR:
         return rotated
     
     # =========================================================================
-    # ENHANCEMENT 3: ADAPTIVE THRESHOLDING
+    # ENHANCEMENT 3: ADAPTIVE THRESHOLDING (IMPROVED - MULTI-PARAMETER)
     # =========================================================================
     def adaptive_binarization(self, gray_image):
         """
         Adaptive thresholding for better results with varying lighting
+        IMPROVED: Optimized parameters for Urdu text
         """
-        # Apply Gaussian Adaptive Thresholding
+        # Apply Gaussian Adaptive Thresholding with optimized parameters
         binary = cv2.adaptiveThreshold(
             gray_image,
             255,
             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY_INV,
-            blockSize=11,  # Size of neighborhood
-            C=2            # Constant subtracted from mean
+            blockSize=13,  # Optimized for Urdu text
+            C=3            # Optimized constant
         )
         return binary
     
@@ -162,33 +195,23 @@ class BatchUrduOCR:
     # =========================================================================
     def remove_noise_morphology(self, binary_image):
         """
-        Remove noise using morphological operations:
-        - Opening: Removes small white noise (foreground)
-        - Closing: Fills small holes in characters
+        MINIMAL noise removal to preserve dots (nuqte)
+        NO morphological operations - direct return to keep dots separate
         """
-        # Define kernels
-        kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2, 2))
-        kernel_medium = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        
-        # Step 1: Opening - remove small noise particles
-        opened = cv2.morphologyEx(binary_image, cv2.MORPH_OPEN, kernel_small)
-        
-        # Step 2: Closing - fill small holes in characters
-        closed = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel_medium)
-        
-        return closed
+        # Return as-is to preserve all dots and fine details
+        return binary_image
     
     # =========================================================================
     # COMPLETE ENHANCED PREPROCESSING PIPELINE
     # =========================================================================
     def preprocess_binarization(self, image, save_steps=False, base_name=""):
         """
-        Enhanced preprocessing pipeline:
-        1. Convert to grayscale
-        2. Contrast enhancement (CLAHE)
-        3. Skew detection and correction
-        4. Adaptive thresholding
-        5. Noise removal (morphological operations)
+        SIMPLIFIED preprocessing for CLEARER images:
+        1. Grayscale
+        2. Light denoising (optional)
+        3. Sharpen for clear edges
+        4. Otsu's thresholding (gives CLEANEST results)
+        5. NO morphological operations (preserve dots)
         """
         steps = {}
         
@@ -199,29 +222,27 @@ class BatchUrduOCR:
             gray = image.copy()
         steps['1_grayscale'] = gray
         
-        # Step 2: Contrast Enhancement (CLAHE)
-        enhanced = self.enhance_contrast(gray)
-        steps['2_contrast_enhanced'] = enhanced
+        # Step 2: OPTIONAL - Very light denoising (comment out if not needed)
+        # denoised = cv2.GaussianBlur(gray, (3, 3), 0)
+        # steps['2_denoised'] = denoised
+        # gray = denoised
         
-        # Step 3: Initial binarization for skew detection
-        _, initial_binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+        # Step 3: Sharpen for clearer edges
+        sharpened = self.sharpen_image(gray)
+        steps['2_sharpened'] = sharpened
         
-        # Step 4: Skew Detection and Correction
-        skew_angle = self.detect_skew_angle(initial_binary)
-        if abs(skew_angle) > 0.5:
-            enhanced = self.correct_skew(enhanced, skew_angle)
-            steps['3_skew_corrected'] = enhanced
-            print(f"    ↳ Skew corrected: {skew_angle:.2f}°")
-        else:
-            steps['3_skew_corrected'] = enhanced
+        # Step 4: Otsu's Thresholding (gives CLEANEST binary images)
+        # This automatically finds the best threshold value
+        _, binary_otsu = cv2.threshold(
+            sharpened, 0, 255, 
+            cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
+        )
+        steps['3_otsu_threshold'] = binary_otsu
         
-        # Step 5: Adaptive Thresholding
-        binary_adaptive = self.adaptive_binarization(enhanced)
-        steps['4_adaptive_threshold'] = binary_adaptive
-        
-        # Step 6: Noise Removal (Morphological Operations)
-        binary_clean = self.remove_noise_morphology(binary_adaptive)
-        steps['5_noise_removed'] = binary_clean
+        # Step 5: NO morphological operations - keep image CLEAN
+        # Direct use of binary image preserves all details
+        binary_clean = binary_otsu
+        steps['4_final'] = binary_clean
         
         # Save preprocessing steps if requested
         if save_steps and base_name:
@@ -235,13 +256,82 @@ class BatchUrduOCR:
             filepath = os.path.join(self.preprocessing_folder, f"{base_name}_{step_name}.png")
             cv2.imwrite(filepath, step_image)
     
+    # =========================================================================
+    # IMPROVEMENT: SPLIT MERGED COMPONENTS USING DISTANCE TRANSFORM
+    # =========================================================================
+    def split_merged_components(self, binary_component):
+        """
+        Split touching/merged characters using distance transform and watershed
+        Returns list of separated components
+        """
+        if binary_component.sum() == 0:
+            return [binary_component]
+        
+        # Distance transform
+        dist = cv2.distanceTransform(binary_component, cv2.DIST_L2, 5)
+        
+        # Find peaks (character centers)
+        ret, sure_fg = cv2.threshold(dist, 0.3 * dist.max(), 255, 0)
+        sure_fg = sure_fg.astype(np.uint8)
+        
+        # Find markers
+        ret, markers = cv2.connectedComponents(sure_fg.astype(np.uint8))
+        
+        # If only one marker, no need to split
+        if ret <= 2:
+            return [binary_component]
+        
+        # Watershed segmentation
+        # Convert to 3-channel for watershed
+        component_3ch = cv2.cvtColor(binary_component, cv2.COLOR_GRAY2BGR)
+        markers = cv2.watershed(component_3ch, markers)
+        
+        # Extract individual components
+        split_components = []
+        for label in range(2, ret + 1):
+            mask = np.where(markers == label, 255, 0).astype(np.uint8)
+            if mask.sum() > 0:
+                split_components.append(mask)
+        
+        return split_components if len(split_components) > 0 else [binary_component]
+    
+    # =========================================================================
+    # IMPROVEMENT: REMOVE PAGE BORDERS
+    # =========================================================================
+    def remove_page_borders(self, binary_image):
+        """
+        Remove page borders and crop to content area
+        """
+        # Find contours
+        contours, _ = cv2.findContours(binary_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        if len(contours) == 0:
+            return binary_image
+        
+        # Get bounding box of all content
+        all_points = np.concatenate([cnt for cnt in contours])
+        x, y, w, h = cv2.boundingRect(all_points)
+        
+        # Add small padding
+        padding = 10
+        x = max(0, x - padding)
+        y = max(0, y - padding)
+        w = min(binary_image.shape[1] - x, w + 2 * padding)
+        h = min(binary_image.shape[0] - y, h + 2 * padding)
+        
+        # Crop
+        cropped = binary_image[y:y+h, x:x+w]
+        
+        return cropped
+    
     def extract_components(self, binary_image):
-        """Step 2: Connected Component Labeling"""
+        """Step 2: Connected Component Labeling with IMPROVED statistical filtering"""
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(
             binary_image, connectivity=8
         )
         
-        components = []
+        # First pass: collect all components above minimum threshold
+        all_components = []
         for i in range(1, num_labels):
             x = stats[i, cv2.CC_STAT_LEFT]
             y = stats[i, cv2.CC_STAT_TOP]
@@ -254,22 +344,155 @@ class BatchUrduOCR:
                 component_mask = (labels == i).astype(np.uint8) * 255
                 component_image = component_mask[y:y+h, x:x+w]
                 
-                components.append({
+                all_components.append({
                     'id': i, 'x': x, 'y': y, 'width': w, 'height': h,
                     'area': area, 'centroid_x': cx, 'centroid_y': cy,
                     'image': component_image, 'bbox': (x, y, w, h)
                 })
         
+        # IMPROVED: Statistical outlier filtering (remove only extreme outliers)
+        if len(all_components) > 5:  # Only apply if we have enough components
+            areas = [c['area'] for c in all_components]
+            mean_area = np.mean(areas)
+            std_area = np.std(areas)
+            
+            # Keep all small components (area < mean) and larger ones within reasonable bounds
+            # This ensures we don't lose small diacritics
+            components = [c for c in all_components 
+                         if c['area'] <= mean_area or c['area'] < mean_area + 5 * std_area]
+        else:
+            components = all_components
+        
         return components
     
+    # =========================================================================
+    # IMPROVEMENT: MULTI-SCALE DETECTION
+    # =========================================================================
+    def multiscale_detect_components(self, binary_image):
+        """
+        IMPROVED: Detect components at multiple scales and merge results
+        This catches characters of different sizes
+        """
+        h, w = binary_image.shape
+        all_components = []
+        
+        for scale in self.scales:
+            # Resize image
+            if scale != 1.0:
+                new_w = int(w * scale)
+                new_h = int(h * scale)
+                scaled = cv2.resize(binary_image, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
+            else:
+                scaled = binary_image.copy()
+            
+            # Detect components at this scale
+            components = self.extract_components(scaled)
+            
+            # Scale coordinates back to original size
+            if scale != 1.0:
+                for comp in components:
+                    comp['x'] = int(comp['x'] / scale)
+                    comp['y'] = int(comp['y'] / scale)
+                    comp['width'] = int(comp['width'] / scale)
+                    comp['height'] = int(comp['height'] / scale)
+                    comp['centroid_x'] = comp['centroid_x'] / scale
+                    comp['centroid_y'] = comp['centroid_y'] / scale
+                    comp['bbox'] = (comp['x'], comp['y'], comp['width'], comp['height'])
+                    # Resize component image back
+                    if comp['image'] is not None:
+                        comp['image'] = cv2.resize(comp['image'], 
+                                                   (comp['width'], comp['height']), 
+                                                   interpolation=cv2.INTER_CUBIC)
+            
+            all_components.extend(components)
+        
+        # Remove duplicate detections using Non-Maximum Suppression
+        unique_components = self.non_maximum_suppression(all_components)
+        
+        return unique_components
+    
+    def non_maximum_suppression(self, components, iou_threshold=0.5):
+        """
+        Remove duplicate component detections using IoU-based NMS
+        """
+        if len(components) == 0:
+            return []
+        
+        # Sort by area (larger first)
+        components = sorted(components, key=lambda c: c['area'], reverse=True)
+        
+        keep = []
+        
+        while len(components) > 0:
+            # Take the largest remaining component
+            current = components.pop(0)
+            keep.append(current)
+            
+            # Remove components that overlap significantly with current
+            # IMPROVED: More aggressive overlap threshold for multi-scale
+            remaining = []
+            for comp in components:
+                iou = self.calculate_iou(current['bbox'], comp['bbox'])
+                if iou < 0.3:  # Reduced from 0.5 to 0.3 for stricter filtering
+                    remaining.append(comp)
+            
+            components = remaining
+        
+        return keep
+    
+    def calculate_iou(self, box1, box2):
+        """
+        Calculate Intersection over Union (IoU) between two bounding boxes
+        box format: (x, y, w, h)
+        """
+        x1, y1, w1, h1 = box1
+        x2, y2, w2, h2 = box2
+        
+        # Calculate intersection
+        xi1 = max(x1, x2)
+        yi1 = max(y1, y2)
+        xi2 = min(x1 + w1, x2 + w2)
+        yi2 = min(y1 + h1, y2 + h2)
+        
+        if xi2 <= xi1 or yi2 <= yi1:
+            return 0.0
+        
+        intersection = (xi2 - xi1) * (yi2 - yi1)
+        
+        # Calculate union
+        area1 = w1 * h1
+        area2 = w2 * h2
+        union = area1 + area2 - intersection
+        
+        return intersection / union if union > 0 else 0.0
+    
     def detect_baseline(self, binary_image):
-        """Step 3: Baseline Detection"""
+        """Step 3: Baseline Detection - IMPROVED with robust method"""
+        # Method 1: Traditional horizontal projection
         horizontal_projection = np.sum(binary_image, axis=1)
-        baseline_y = np.argmax(horizontal_projection)
+        baseline_y_proj = np.argmax(horizontal_projection)
+        
+        # Method 2: IMPROVED - Contour-based (more robust)
+        contours, _ = cv2.findContours(binary_image.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours) > 0:
+            # Get bottom-most points of all contours
+            bottom_points = []
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                bottom_points.append(y + h)
+            
+            # Use median for robustness (less affected by outliers)
+            baseline_y_contour = int(np.median(bottom_points))
+            
+            # Use average of both methods
+            baseline_y = int((baseline_y_proj + baseline_y_contour) / 2)
+        else:
+            baseline_y = baseline_y_proj
+        
         return baseline_y
     
     def separate_primary_secondary(self, components, baseline_y):
-        """Step 4: Separate Primary and Secondary Components"""
+        """Step 4: Separate Primary and Secondary Components - IMPROVED with multiple criteria"""
         primary_components = []
         secondary_components = []
         
@@ -278,14 +501,39 @@ class BatchUrduOCR:
         
         avg_height = np.mean([c['height'] for c in components])
         avg_area = np.mean([c['area'] for c in components])
+        avg_width = np.mean([c['width'] for c in components])
         
         for comp in components:
             y_top = comp['y']
             y_bottom = comp['y'] + comp['height']
-            touches_baseline = y_top <= baseline_y <= y_bottom
-            is_small = comp['area'] < avg_area * 0.3 or comp['height'] < avg_height * 0.5
             
-            if touches_baseline or (not is_small and comp['height'] > avg_height * 0.4):
+            # Criterion 1: Baseline touching
+            touches_baseline = y_top <= baseline_y <= y_bottom
+            
+            # Criterion 2: Size relative to average
+            relative_area = comp['area'] / avg_area
+            relative_height = comp['height'] / avg_height
+            
+            # Criterion 3: IMPROVED - Aspect ratio (diacritics tend to be circular)
+            aspect_ratio = comp['width'] / comp['height'] if comp['height'] > 0 else 1
+            is_round = 0.6 < aspect_ratio < 1.4
+            
+            # Criterion 4: IMPROVED - Distance from baseline
+            distance_from_baseline = min(abs(y_top - baseline_y), abs(y_bottom - baseline_y))
+            is_far_from_baseline = distance_from_baseline > avg_height * 0.3
+            
+            # IMPROVED CLASSIFICATION LOGIC:
+            # Diacritics: small, round, far from baseline
+            is_diacritic = (
+                relative_area < 0.25 and 
+                is_far_from_baseline and 
+                is_round
+            ) or (
+                relative_height < 0.4 and 
+                relative_area < 0.2
+            )
+            
+            if not is_diacritic and (touches_baseline or relative_height > 0.45):
                 comp['type'] = 'primary'
                 comp['position'] = 'baseline'
                 primary_components.append(comp)
@@ -352,9 +600,14 @@ class BatchUrduOCR:
         print(f"  ✓ Binary saved: {base_name}_binary.png")
         print(f"  ✓ Preprocessing steps saved to: preprocessing_steps/")
         
-        # Step 2: Extract components
-        components = self.extract_components(binary_image)
-        print(f"  ✓ Components found: {len(components)}")
+        # Step 2: Extract components with MULTI-SCALE DETECTION
+        if self.use_multiscale:
+            print(f"  📌 Multi-scale detection at scales: {self.scales}")
+            components = self.multiscale_detect_components(binary_image)
+            print(f"  ✓ Components found (multi-scale): {len(components)}")
+        else:
+            components = self.extract_components(binary_image)
+            print(f"  ✓ Components found: {len(components)}")
         
         if len(components) == 0:
             print("  ✗ No components detected!")
