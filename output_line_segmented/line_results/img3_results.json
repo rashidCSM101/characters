@@ -1,18 +1,18 @@
 {
   "image": "img3.png",
-  "total_lines": 1,
+  "total_lines": 17,
   "processed_lines": 1,
   "results": [
     {
       "line_number": 1,
-      "ligatures": 8,
-      "orphans": 0,
-      "total": 13
+      "ligatures": 24,
+      "orphans": 3,
+      "total": 54
     }
   ],
   "totals": {
-    "ligatures": 8,
-    "orphans": 0,
-    "components": 13
+    "ligatures": 24,
+    "orphans": 3,
+    "components": 54
   }
 }

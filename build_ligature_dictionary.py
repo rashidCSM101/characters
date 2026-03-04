@@ -1,9 +1,10 @@
 """
 Ligature Dictionary Builder
 ============================
-Extracts unique ligatures and builds a dictionary with duplicate handling
+Automatically processes images from input folder, extracts ligatures,
+and builds a dictionary with duplicate handling
 
-Usage: python build_ligature_dictionary.py <results_folder>
+Usage: python build_ligature_dictionary.py
 """
 
 import cv2
@@ -12,15 +13,17 @@ import os
 import json
 import hashlib
 from collections import defaultdict
+from datetime import datetime
 
 
 class LigatureDictionaryBuilder:
-    """Builds a dictionary of unique ligatures from OCR results"""
+    """Builds a dictionary of unique ligatures by processing extracted characters"""
     
-    def __init__(self, results_folder):
+    def __init__(self, results_folder=None, output_folder="ligature_dictionary"):
         self.results_folder = results_folder
-        self.dict_folder = os.path.join(results_folder, "ligature_dictionary")
-        self.duplicates_folder = os.path.join(self.dict_folder, "duplicates")
+        self.output_folder = output_folder
+        self.dict_folder = os.path.join(output_folder, "unique_ligatures")
+        self.duplicates_folder = os.path.join(output_folder, "duplicates")
         
         # Create folders
         os.makedirs(self.dict_folder, exist_ok=True)
@@ -31,6 +34,10 @@ class LigatureDictionaryBuilder:
         self.hash_to_id = {}     # hash -> unique_id
         self.next_id = 1
         self.duplicate_count = 0
+        
+        # Statistics
+        self.total_results_processed = 0
+        self.total_chars_extracted = 0
         
     def compute_image_hash(self, img):
         """Compute perceptual hash for image comparison"""
@@ -121,41 +128,54 @@ class LigatureDictionaryBuilder:
             
             return lig_id, False  # False = is_new
     
-    def build_from_results(self):
-        """Build dictionary from extracted characters"""
-        print("="*70)
-        print("BUILDING LIGATURE DICTIONARY")
-        print("="*70)
+    def find_all_results_folders(self):
+        """Find all results_* folders in current directory"""
+        results_folders = []
+        for item in os.listdir('.'):
+            if os.path.isdir(item) and item.startswith('results_'):
+                chars_folder = os.path.join(item, '4_extracted_chars')
+                if os.path.exists(chars_folder):
+                    results_folders.append(item)
+        return sorted(results_folders)
+    
+    def process_results_folder(self, results_folder):
+        """Process extracted characters from a results folder"""
+        chars_folder = os.path.join(results_folder, '4_extracted_chars')
         
-        # Find all character folders
-        chars_folder = os.path.join(self.results_folder, "4_extracted_chars")
+        print(f"\n📂 Processing: {results_folder}")
         
         if not os.path.exists(chars_folder):
-            print(f"❌ Error: Character folder not found: {chars_folder}")
-            return
+            print(f"  ❌ Characters folder not found: {chars_folder}")
+            return 0
         
-        # Process each line folder
-        line_folders = [f for f in os.listdir(chars_folder) 
-                       if os.path.isdir(os.path.join(chars_folder, f))]
+        # Find all line folders
+        line_folders = [
+            f for f in os.listdir(chars_folder)
+            if os.path.isdir(os.path.join(chars_folder, f)) and f.startswith('line_')
+        ]
+        
+        if not line_folders:
+            print(f"  ❌ No line folders found")
+            return 0
         
         line_folders.sort()
+        print(f"  📏 Found {len(line_folders)} line folders")
         
-        total_chars = 0
-        unique_count = 0
-        duplicate_count = 0
+        chars_count = 0
         
+        # Process each line folder
         for line_folder in line_folders:
             line_path = os.path.join(chars_folder, line_folder)
             line_num = line_folder.replace('line_', '')
-            
-            print(f"\n📄 Processing {line_folder}...")
             
             # Get all character images
             char_files = [f for f in os.listdir(line_path) if f.endswith('.png')]
             char_files.sort()
             
+            print(f"    📄 {line_folder}: {len(char_files)} characters")
+            
             for char_file in char_files:
-                # Extract diacritic count from filename
+                # Extract info from filename
                 parts = char_file.replace('.png', '').split('_')
                 diacritic_count = 0
                 char_idx = 0
@@ -178,35 +198,74 @@ class LigatureDictionaryBuilder:
                 
                 # Add to dictionary
                 lig_id, is_duplicate = self.add_ligature(
-                    img, line_num, char_idx, diacritic_count
+                    img,
+                    source_line=f"{results_folder}_L{line_num}",
+                    source_char_idx=char_idx,
+                    diacritic_count=diacritic_count
                 )
                 
-                total_chars += 1
-                if is_duplicate:
-                    duplicate_count += 1
-                else:
-                    unique_count += 1
+                chars_count += 1
+                status = "✓" if not is_duplicate else "≈"
                 
-                status = "duplicate" if is_duplicate else "unique"
-                print(f"  ├─ {char_file} -> ligature_{lig_id:04d} ({status})")
+        self.total_results_processed += 1
+        self.total_chars_extracted += chars_count
+        
+        print(f"  ✅ Processed {chars_count} characters")
+        
+        return chars_count
+    
+    def build_from_extracted_chars(self):
+        """Build dictionary from extracted characters in results folders"""
+        print("="*70)
+        print("AUTOMATIC LIGATURE DICTIONARY BUILDER")
+        print("="*70)
+        
+        # Determine which results folders to process
+        if self.results_folder:
+            # Process specific folder
+            if not os.path.exists(self.results_folder):
+                print(f"\n❌ Error: Results folder not found: {self.results_folder}")
+                return None
+            results_folders = [self.results_folder]
+        else:
+            # Find all results folders
+            results_folders = self.find_all_results_folders()
+            
+            if not results_folders:
+                print("\n❌ No results_* folders found!")
+                print("Please run complete_urdu_ocr.py first to generate extracted characters")
+                return None
+        
+        print(f"\n📊 Found {len(results_folders)} results folder(s) to process:")
+        for folder in results_folders:
+            print(f"  • {folder}")
+        
+        # Process each results folder
+        for results_folder in results_folders:
+            self.process_results_folder(results_folder)
         
         # Summary
         print("\n" + "="*70)
         print("DICTIONARY BUILDING COMPLETE")
         print("="*70)
-        print(f"\n📊 Statistics:")
-        print(f"  Total characters processed: {total_chars}")
-        print(f"  Unique ligatures: {unique_count}")
-        print(f"  Duplicates: {duplicate_count}")
-        print(f"  Compression ratio: {(unique_count/total_chars*100):.1f}%")
+        print(f"\n📊 Final Statistics:")
+        print(f"  Results folders processed: {self.total_results_processed}")
+        print(f"  Total characters extracted: {self.total_chars_extracted}")
+        print(f"  Unique ligatures: {len(self.ligature_dict)}")
+        print(f"  Duplicates: {self.duplicate_count}")
+        
+        if self.total_chars_extracted > 0:
+            compression = (len(self.ligature_dict) / self.total_chars_extracted * 100)
+            print(f"  Compression ratio: {compression:.1f}%")
         
         # Save dictionary metadata
         self.save_dictionary_info()
         
         return {
-            'total_chars': total_chars,
-            'unique_ligatures': unique_count,
-            'duplicates': duplicate_count
+            'results_processed': self.total_results_processed,
+            'total_chars': self.total_chars_extracted,
+            'unique_ligatures': len(self.ligature_dict),
+            'duplicates': self.duplicate_count
         }
     
     def save_dictionary_info(self):
@@ -353,32 +412,27 @@ def main():
     import sys
     
     print("="*70)
-    print("LIGATURE DICTIONARY BUILDER")
+    print("AUTOMATIC LIGATURE DICTIONARY BUILDER")
     print("="*70)
+    print(f"\n🎯 What it does:")
+    print("  1. Reads extracted characters from results_*/4_extracted_chars/")
+    print("  2. Identifies unique ligatures")
+    print("  3. Detects and handles duplicates")
+    print("  4. Creates organized dictionary")
+    print("  5. Generates visual grid")
     
-    if len(sys.argv) < 2:
-        print("\n📝 Usage:")
-        print("   python build_ligature_dictionary.py <results_folder>")
-        print("\n📌 Example:")
-        print('   python build_ligature_dictionary.py "results_img3"')
-        print("\n🎯 What it does:")
-        print("  ✓ Extracts all ligatures from OCR results")
-        print("  ✓ Identifies unique ligatures")
-        print("  ✓ Detects and handles duplicates")
-        print("  ✓ Creates organized dictionary folder")
-        print("  ✓ Generates visual dictionary grid")
-        print("  ✓ Saves detailed JSON metadata")
-        return
+    # Get results folder from argument (optional)
+    results_folder = sys.argv[1] if len(sys.argv) > 1 else None
+    output_folder = sys.argv[2] if len(sys.argv) > 2 else "ligature_dictionary"
     
-    results_folder = sys.argv[1]
-    
-    if not os.path.exists(results_folder):
-        print(f"❌ Error: Results folder not found: {results_folder}")
-        return
+    if results_folder:
+        print(f"\n📂 Target folder: {results_folder}")
+    else:
+        print(f"\n📂 Mode: Auto-detect all results_* folders")
     
     # Build dictionary
-    builder = LigatureDictionaryBuilder(results_folder)
-    stats = builder.build_from_results()
+    builder = LigatureDictionaryBuilder(results_folder, output_folder)
+    stats = builder.build_from_extracted_chars()
     
     # Create visual dictionary
     if stats and stats['unique_ligatures'] > 0:
@@ -387,6 +441,16 @@ def main():
     print("\n" + "="*70)
     print("✅ DICTIONARY BUILDING COMPLETE!")
     print("="*70)
+    print(f"\n📁 Check output folder: {output_folder}/")
+    print("  ├── unique_ligatures/ (all unique ligatures)")
+    print("  ├── duplicates/ (duplicate instances)")
+    print("  ├── dictionary_info.json")
+    print("  ├── summary.txt")
+    print("  └── visual_dictionary.png")
+    
+    print("\n📝 Usage examples:")
+    print("  python build_ligature_dictionary.py              # Process all results_* folders")
+    print("  python build_ligature_dictionary.py results_img3 # Process specific folder")
 
 
 if __name__ == "__main__":
