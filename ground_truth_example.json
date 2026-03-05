@@ -1,0 +1,16 @@
+[
+  {
+    "image": "image",
+    "total_gt_nodes": 12,
+    "total_gt_H": 22,
+    "total_gt_V": 2,
+    "total_gt_N": 0
+  },
+  {
+    "image": "img-1",
+    "total_gt_nodes": 15,
+    "total_gt_H": 42,
+    "total_gt_V": 16,
+    "total_gt_N": 6
+  }
+]

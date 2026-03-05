@@ -1,0 +1,283 @@
+[
+  {
+    "line": 1,
+    "num_nodes": 13,
+    "edges": [
+      {
+        "src": 0,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 5,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 8,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 11,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 12,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 6,
+        "type": "V"
+      },
+      {
+        "src": 1,
+        "dst": 10,
+        "type": "V"
+      },
+      {
+        "src": 2,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 5,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 8,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 11,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 6,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 7,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 9,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 10,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 6,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 7,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 10,
+        "type": "N"
+      },
+      {
+        "src": 4,
+        "dst": 12,
+        "type": "V"
+      },
+      {
+        "src": 5,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 5,
+        "dst": 2,
+        "type": "N"
+      },
+      {
+        "src": 5,
+        "dst": 8,
+        "type": "V"
+      },
+      {
+        "src": 5,
+        "dst": 11,
+        "type": "V"
+      },
+      {
+        "src": 6,
+        "dst": 1,
+        "type": "V"
+      },
+      {
+        "src": 6,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 6,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 6,
+        "dst": 7,
+        "type": "H"
+      },
+      {
+        "src": 6,
+        "dst": 10,
+        "type": "V"
+      },
+      {
+        "src": 7,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 7,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 7,
+        "dst": 6,
+        "type": "H"
+      },
+      {
+        "src": 7,
+        "dst": 10,
+        "type": "V"
+      },
+      {
+        "src": 8,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 8,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 8,
+        "dst": 5,
+        "type": "V"
+      },
+      {
+        "src": 9,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 10,
+        "dst": 1,
+        "type": "V"
+      },
+      {
+        "src": 10,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 10,
+        "dst": 6,
+        "type": "V"
+      },
+      {
+        "src": 10,
+        "dst": 7,
+        "type": "V"
+      },
+      {
+        "src": 10,
+        "dst": 12,
+        "type": "H"
+      },
+      {
+        "src": 11,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 11,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 11,
+        "dst": 5,
+        "type": "V"
+      },
+      {
+        "src": 11,
+        "dst": 12,
+        "type": "H"
+      },
+      {
+        "src": 12,
+        "dst": 0,
+        "type": "N"
+      },
+      {
+        "src": 12,
+        "dst": 4,
+        "type": "V"
+      },
+      {
+        "src": 12,
+        "dst": 10,
+        "type": "N"
+      },
+      {
+        "src": 12,
+        "dst": 11,
+        "type": "H"
+      }
+    ]
+  }
+]

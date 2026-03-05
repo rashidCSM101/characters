@@ -1,0 +1,108 @@
+{
+  "image": "img-1",
+  "gt": {
+    "nodes": 15,
+    "H": 42,
+    "V": 16,
+    "N": 6
+  },
+  "metrics": {
+    "detected_nodes": 13,
+    "detected_edges_H": 37,
+    "detected_edges_V": 14,
+    "detected_edges_N": 4,
+    "detected_edges_total": 55,
+    "gt_nodes": 15,
+    "gt_edges_H": 42,
+    "gt_edges_V": 16,
+    "gt_edges_N": 6,
+    "gt_edges_total": 64,
+    "node_metrics": {
+      "actual": 15,
+      "detected": 13,
+      "tp": 13,
+      "fp": 0,
+      "fn": 2,
+      "precision": 100.0,
+      "recall": 86.6667,
+      "f1": 92.8571,
+      "accuracy": 86.6667
+    },
+    "edge_H_metrics": {
+      "actual": 42,
+      "detected": 37,
+      "tp": 37,
+      "fp": 0,
+      "fn": 5,
+      "precision": 100.0,
+      "recall": 88.0952,
+      "f1": 93.6709,
+      "accuracy": 88.0952
+    },
+    "edge_V_metrics": {
+      "actual": 16,
+      "detected": 14,
+      "tp": 14,
+      "fp": 0,
+      "fn": 2,
+      "precision": 100.0,
+      "recall": 87.5,
+      "f1": 93.3333,
+      "accuracy": 87.5
+    },
+    "edge_N_metrics": {
+      "actual": 6,
+      "detected": 4,
+      "tp": 4,
+      "fp": 0,
+      "fn": 2,
+      "precision": 100.0,
+      "recall": 66.6667,
+      "f1": 80.0,
+      "accuracy": 66.6667
+    },
+    "edge_total_metrics": {
+      "actual": 64,
+      "detected": 55,
+      "tp": 55,
+      "fp": 0,
+      "fn": 9,
+      "precision": 100.0,
+      "recall": 85.9375,
+      "f1": 92.437,
+      "accuracy": 85.9375
+    },
+    "tp_total": 68,
+    "fp_total": 0,
+    "fn_total": 11,
+    "overall_accuracy": 86.0759,
+    "overall_precision": 100.0,
+    "overall_recall": 86.0759,
+    "overall_f1": 92.517,
+    "gt_edge_ratio": {
+      "H": 0.6562,
+      "V": 0.25,
+      "N": 0.0938
+    },
+    "det_edge_ratio": {
+      "H": 0.6727,
+      "V": 0.2545,
+      "N": 0.0727
+    },
+    "distribution_accuracy": 98.5985,
+    "dist_error_pct": 1.4015,
+    "detected_density": 0.3526,
+    "gt_density": 0.3048,
+    "per_line": [
+      {
+        "line": 1,
+        "nodes": 13,
+        "edges_H": 37,
+        "edges_V": 14,
+        "edges_N": 4,
+        "edges_total": 55
+      }
+    ]
+  },
+  "computed_at": "2026-03-05 12:29:05"
+}
