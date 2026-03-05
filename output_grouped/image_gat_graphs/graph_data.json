@@ -1,0 +1,134 @@
+[
+  {
+    "line": 1,
+    "num_nodes": 7,
+    "edges": [
+      {
+        "src": 0,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 5,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 6,
+        "type": "V"
+      },
+      {
+        "src": 3,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 3,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 3,
+        "type": "H"
+      },
+      {
+        "src": 5,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 6,
+        "dst": 2,
+        "type": "V"
+      }
+    ]
+  },
+  {
+    "line": 2,
+    "num_nodes": 5,
+    "edges": [
+      {
+        "src": 0,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 0,
+        "dst": 4,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 1,
+        "dst": 2,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 0,
+        "type": "H"
+      },
+      {
+        "src": 2,
+        "dst": 1,
+        "type": "H"
+      },
+      {
+        "src": 4,
+        "dst": 0,
+        "type": "H"
+      }
+    ]
+  }
+]
